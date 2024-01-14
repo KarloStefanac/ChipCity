@@ -81,7 +81,7 @@ fun ProductDetailsShow(
 //            .background(color = Black)
             .background(brush = Brush.verticalGradient(colorStops = colorStops)),
     ){
-        Header()
+        Header(navController)
         Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 20.dp)) {
             PageTitle(text = "Opis/info")
             ProductImage(product)

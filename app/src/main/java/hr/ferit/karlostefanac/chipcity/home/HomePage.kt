@@ -71,7 +71,7 @@ fun HomePageContent(
 //            .background(color = Black)
             .background(brush = Brush.verticalGradient(colorStops = colorStops)),
     ) {
-        Header()
+        Header(navController)
         categories.forEach{category ->
             CategoryCard(navController, category)
         }
@@ -79,7 +79,9 @@ fun HomePageContent(
 }
 
 @Composable
-fun Header() {
+fun Header(
+    navController: NavController
+) {
     Row(
         horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier
             .fillMaxWidth()
@@ -93,7 +95,7 @@ fun Header() {
                 //.width(10.dp)
                 .fillMaxHeight()
                 .padding(0.dp)
-                .clickable { }
+                .clickable { navController.navigate(Routes.getHomePath()) }
         )
         Box(modifier = Modifier
             .fillMaxHeight()
@@ -105,7 +107,7 @@ fun Header() {
                 modifier = Modifier
                     .fillMaxHeight()
                     .size(30.dp)
-                    .clickable { }
+                    .clickable { navController.navigate(Routes.getCartPath()) }
             )
         }
     }

@@ -13,8 +13,15 @@ import hr.ferit.karlostefanac.chipcity.Products.ProductsPage
 
 object Routes{
     const val SCREEN_ALL_CATEGORIES = "HomePage"
+    const val SCREEN_CART_PAGE = "CartPage"
     const val SCREEN_CATEGORY_DETAILS = "ProductsPage/{categoryId}"
     const val SCREEN_PRODUCT_DETAILS = "ProductsPage/{categoryId}/{productId}"
+    fun getHomePath() : String {
+        return "HomePage"
+    }
+    fun getCartPath() : String {
+        return "CartPage"
+    }
     fun getCategoryDetailsPath(categoryId: String) : String {
 //        if (categoryId != null && categoryId != -1){
 //            return "ProductsPage"
@@ -31,8 +38,10 @@ fun NavigationController() {
     val navController = rememberNavController()
     NavHost(navController = navController, startDestination = Routes.SCREEN_ALL_CATEGORIES){
         composable(Routes.SCREEN_ALL_CATEGORIES){
-//            HomePage(navController)
             HomePage(navController)
+        }
+        composable(Routes.SCREEN_CART_PAGE){
+            CartPage(navController = navController)
         }
         composable(
             Routes.SCREEN_CATEGORY_DETAILS,

@@ -27,7 +27,7 @@ class CategoryRepository(
         val category = getCategoryByID(id = categoryId)
         var product : Product = Product()
         category.products.forEach { prod: Product ->
-            if (categoryId == productId){
+            if (prod.id == productId){
                 product = prod
             }
         }

@@ -85,7 +85,7 @@ fun ProductsPageShow(
 //            .background(color = Black)
             .background(brush = Brush.verticalGradient(colorStops = colorStops))
     ){
-        Header()
+        Header(navController)
         Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 20.dp)) {
         PageTitle(text = "Sve Arduino ploče")
         ProductGrid(navController,category)
@@ -130,7 +130,7 @@ fun ProductCard(
             .width(150.dp)
             .padding(5.dp),
 //            .shadow(elevation = 15.dp, shape = RoundedCornerShape(10.dp)),
-        colors = CardDefaults.cardColors(Color(191, 25, 25, 255)),
+        colors = CardDefaults.cardColors(Color(191, 25, 25, 70)),
         shape = RoundedCornerShape(10.dp),
     ) {
         Column {
