@@ -1,4 +1,4 @@
-package hr.ferit.karlostefanac.chipcity.ui
+package hr.ferit.karlostefanac.chipcity.Products
 
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
@@ -21,6 +21,8 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,21 +34,45 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
+import hr.ferit.karlostefanac.chipcity.R
+import hr.ferit.karlostefanac.chipcity.Routes
+import hr.ferit.karlostefanac.chipcity.home.Header
 import hr.ferit.karlostefanac.chipcity.models.Category
-import hr.ferit.karlostefanac.chipcity.models.categories
-import hr.ferit.karlostefanac.chipcity.models.categoryA
+import hr.ferit.karlostefanac.chipcity.models.Product
 
-//@Preview (showBackground = true)
 @Composable
 fun ProductsPage(
     navController: NavController,
     categoryID: String
 ) {
+    val viewModel : ProductsListViewModel = viewModel()
+    val state = viewModel.state.collectAsState()
 
-    var category : Category = categories[2]
-    categories.forEach { cat -> if (cat.id == categoryID) {category = cat}}
+    LaunchedEffect(key1 = "", block = {
+        viewModel.getCategory(categoryID)
+    })
 
+    when(state.value){
+        is ProductsState.Loading -> DetailsLoading()
+        is ProductsState.Success -> ProductsPageShow(
+            navController = navController,
+            category = (state.value as ProductsState.Success).state)
+    }
+}
+
+@Composable
+fun DetailsLoading() {
+
+}
+
+@Composable
+fun ProductsPageShow(
+    navController: NavController,
+    category: Category
+) {
     val colorStops = arrayOf(
         0.1f to Color.Black,
         0.4f to Color(110,25,25)
@@ -61,33 +87,46 @@ fun ProductsPage(
     ){
         Header()
         Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 20.dp)) {
-        Text(text = "Sve Arduino ploče",
+        PageTitle(text = "Sve Arduino ploče")
+        ProductGrid(navController,category)
+        }
+    }
+}
+
+@Composable
+fun PageTitle(
+    text : String
+) {
+    Column{
+        Text(
+            text = text,
             style = MaterialTheme.typography.bodyLarge.copy(
                 color = Color.White,
                 fontWeight = FontWeight.Medium,
                 fontSize = 20.sp,
                 fontFamily = FontFamily.Monospace
-        ),
-        modifier = Modifier
-            .align(Alignment.Start),)
+            ),
+            modifier = Modifier
+                .align(Alignment.Start),
+        )
         Box(
             modifier = Modifier
                 .background(color = Color.White)
                 .fillMaxWidth()
-                .height(1.dp))
-        ProductGrid(category)
-        }
-//        ProductCard("Arduino uno", price = "36,40", R.drawable.arduino)
+                .height(1.dp)
+        )
     }
 }
 
 @Composable
 fun ProductCard(
-    title: String, price: String, @DrawableRes image: Int
+    navController: NavController,
+    product : Product,
+    category: Category
 ) {
     Card(
         modifier = Modifier
-            .height(200.dp)
+            .height(240.dp)
             .width(150.dp)
             .padding(5.dp),
 //            .shadow(elevation = 15.dp, shape = RoundedCornerShape(10.dp)),
@@ -95,16 +134,18 @@ fun ProductCard(
         shape = RoundedCornerShape(10.dp),
     ) {
         Column {
-            Image(painter = painterResource(id = image),
-                contentDescription = title,
-                modifier = Modifier.clickable { })
-            Text(text = title, style = MaterialTheme.typography.bodyLarge.copy(
+            Box(modifier = Modifier
+                .fillMaxWidth()
+                .clickable { navController.navigate(Routes.getProductDetailsPath(category.id,product.id)) }){
+            AsyncImage(model = product.image, contentDescription = product.name)
+            }
+            Text(text = product.name, style = MaterialTheme.typography.bodyLarge.copy(
                 color = Color.White,
                 fontWeight = FontWeight.Medium,
                 fontSize = 15.sp),
                 modifier = Modifier.padding(5.dp))
             Row {
-                Text(text = price, style = MaterialTheme.typography.bodyLarge.copy(
+                Text(text = product.price.toString() + "€", style = MaterialTheme.typography.bodyLarge.copy(
                     color = Color.White,
                     fontWeight = FontWeight.Medium,
                     fontSize = 15.sp,
@@ -137,13 +178,14 @@ fun ProductCard(
 
 @Composable
 fun ProductGrid(
+    navController: NavController,
     category : Category
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 150.dp)
     ) {
         category.products.forEach { product ->
-            item { ProductCard(product.name, price = "" + product.price + "€", product.image) }
+            item { ProductCard(navController, product, category) }
         }
     }
 }
