@@ -25,7 +25,7 @@ class CategoryRepository(
 
     suspend fun getProductByID(categoryId : String, productId : String) : Product{
         val category = getCategoryByID(id = categoryId)
-        var product : Product = Product()
+        var product = Product()
         category.products.forEach { prod: Product ->
             if (prod.id == productId){
                 product = prod
@@ -59,11 +59,11 @@ class CategoryRepository(
         }
     }
 
-    private suspend fun getProductsFromDocument(productsList: List<Map<String, Any>>): List<Product> {
+    private fun getProductsFromDocument(productsList: List<Map<String, Any>>): List<Product> {
         val products = mutableListOf<Product>()
         productsList.forEach{ productsMap ->
             val product = Product(
-                id = productsMap["id"].toString() ?: "",
+                id = productsMap["id"].toString(),
                 image = productsMap["image"].toString() ?: "",
                 name = productsMap["name"].toString(),
                 price = productsMap["price"].toString().toDouble()

@@ -1,4 +1,4 @@
-package hr.ferit.karlostefanac.chipcity
+package hr.ferit.karlostefanac.chipcity.cart
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,12 +17,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -35,14 +39,43 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import hr.ferit.karlostefanac.chipcity.Products.PageTitle
+import hr.ferit.karlostefanac.chipcity.R
+import hr.ferit.karlostefanac.chipcity.Routes
 import hr.ferit.karlostefanac.chipcity.home.Header
+import hr.ferit.karlostefanac.chipcity.models.Product
 
 @Composable
 fun CartPage(
-    navController : NavController
+    navController: NavController,
+    repository: CartRepository
+) {
+    val viewModel : CartListModel = viewModel()
+    val state = viewModel.state.collectAsState()
+
+    LaunchedEffect(key1 = "", block = {
+        viewModel.getProducts()
+    })
+
+    when(state.value){
+        is CartState.Loading -> CartLoading()
+        is CartState.Success -> CartPageShow(navController = navController, products = (state.value as CartState.Success).state,repository)
+    }
+}
+
+@Composable
+fun CartLoading() {
+
+}
+
+@Composable
+fun CartPageShow(
+    navController : NavController,
+    products : List<Product>,
+    repository: CartRepository
 ) {
     val colorStops = arrayOf(
         0.1f to Color.Black,
@@ -54,24 +87,42 @@ fun CartPage(
         modifier = Modifier
             .fillMaxSize()
 //            .background(color = Black)
-            .background(brush = Brush.verticalGradient(colorStops = colorStops)),
+            .background(brush = Brush.verticalGradient(colorStops = colorStops))
+            .verticalScroll(rememberScrollState(), true),
     ){
         Header(navController)
         Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 20.dp)) {
             PageTitle(text = "Vaša košarica")
-            CartItem()
+            CartColumn(products,repository,navController)
             Box(
                 modifier = Modifier
                     .background(color = Color.White)
                     .fillMaxWidth()
                     .height(1.dp)
             )
-            CartOrder()
+            CartOrder(repository,products,navController)
+        }
+    }
+}
+
+@Composable
+fun CartColumn(
+    products: List<Product>,
+    repository: CartRepository,
+    navController: NavController
+) {
+    Column {
+        products.forEach{ product ->
+            CartItem(product = product,repository,navController)
         }
     }
 }
 @Composable
-fun CartItem() {
+fun CartItem(
+    product : Product,
+    repository: CartRepository,
+    navController: NavController
+) {
     Card(
         modifier = Modifier
             .height(100.dp)
@@ -86,13 +137,13 @@ fun CartItem() {
                 .height(100.dp)
         ) {
             AsyncImage(
-                model = "https://images.chipoteka.hr/image/cachewebp/catalog/products/171800-1063/raspberry-pi-5-8gb-ram-QQDMGSKPG-1155x1155.webp",
-                contentDescription = "Raspberry Pi",
+                model = product.image,
+                contentDescription = product.name,
                 contentScale = ContentScale.FillBounds,
                 modifier = Modifier
                     .width(100.dp)
                     .fillMaxHeight())
-            CartText()
+            CartText(product)
             Image(
                 painter = painterResource(id = R.drawable.remove),
                 contentDescription = "Remove icon",
@@ -100,16 +151,21 @@ fun CartItem() {
                 modifier = Modifier
                     .fillMaxHeight()
                     .size(30.dp)
-                    .clickable { })
+                    .clickable {
+                        repository.deleteProduct(product.id)
+                        navController.navigate(Routes.getCartPath())
+                    })
         }
     }
 }
 
 @Composable
-fun CartText() {
+fun CartText(
+    product: Product
+) {
     Column {
         Text(
-            text = "Raspberry Pi",
+            text = product.name,
             style = MaterialTheme.typography.bodyLarge.copy(
                 color = Color.White,
                 fontWeight = FontWeight.Medium,
@@ -120,7 +176,7 @@ fun CartText() {
                 .wrapContentHeight(align = Alignment.CenterVertically),
         )
         Text(
-            text = "36,40€",
+            text = "${String.format("%.2f", product.price)}€",
             style = MaterialTheme.typography.bodyLarge.copy(
                 color = Color.White,
                 fontWeight = FontWeight.Medium,
@@ -132,7 +188,12 @@ fun CartText() {
     }
 }
 @Composable
-fun CartOrder() {
+fun CartOrder(
+    repository: CartRepository,
+    products: List<Product>,
+    navController: NavController
+) {
+    val totalPrice = getTotalPrice(products)
     Spacer(modifier = Modifier.height(10.dp))
     Column (
 //        horizontalAlignment = Alignment.CenterHorizontally,
@@ -154,7 +215,7 @@ fun CartOrder() {
                 fontFamily = FontFamily.Monospace
             ),)
         Text(
-            text = "Cijena proizvoda:",
+            text = "Ukupna cijena: ${String.format("%.2f",totalPrice)}€",
             style = MaterialTheme.typography.bodyLarge.copy(
                 color = Color.White,
                 fontWeight = FontWeight.Medium,
@@ -174,13 +235,16 @@ fun CartOrder() {
                         color = Color(165, 45, 45, 128)
                     )
                     .padding(horizontal = 25.dp, vertical = 5.dp)
-                    .clickable { }
+                    .clickable {
+                        repository.clearCart(products)
+                        navController.navigate(Routes.getCartPath())
+                    }
             ) {
                 Text(
                     text = "Plaćanje",
                     style = TextStyle(
                         color = Color.White,
-                        fontSize = 17.sp,
+                        fontSize = 18.sp,
                         fontWeight = FontWeight.Normal
                     )
                 )
@@ -188,4 +252,11 @@ fun CartOrder() {
         }
         Spacer(modifier = Modifier.height(15.dp))
     }
+}
+fun getTotalPrice(products: List<Product>) : Double{
+    var totalPrice = 0.0
+    products.forEach { product ->
+        totalPrice += product.price
+    }
+    return totalPrice
 }

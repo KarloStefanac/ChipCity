@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import hr.ferit.karlostefanac.chipcity.Routes
+import hr.ferit.karlostefanac.chipcity.cart.CartRepository
 import hr.ferit.karlostefanac.chipcity.home.Header
 import hr.ferit.karlostefanac.chipcity.models.Category
 import hr.ferit.karlostefanac.chipcity.models.Product
@@ -42,7 +43,8 @@ import hr.ferit.karlostefanac.chipcity.models.Product
 @Composable
 fun ProductsPage(
     navController: NavController,
-    categoryID: String
+    categoryID: String,
+    repository: CartRepository
 ) {
     val viewModel : ProductsListViewModel = viewModel()
     val state = viewModel.state.collectAsState()
@@ -55,7 +57,7 @@ fun ProductsPage(
         is ProductsState.Loading -> DetailsLoading()
         is ProductsState.Success -> ProductsPageShow(
             navController = navController,
-            category = (state.value as ProductsState.Success).state)
+            category = (state.value as ProductsState.Success).state, repository)
     }
 }
 
@@ -67,7 +69,8 @@ fun DetailsLoading() {
 @Composable
 fun ProductsPageShow(
     navController: NavController,
-    category: Category
+    category: Category,
+    repository: CartRepository
 ) {
     val colorStops = arrayOf(
         0.1f to Color.Black,
@@ -84,7 +87,7 @@ fun ProductsPageShow(
         Header(navController)
         Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 20.dp)) {
         PageTitle(text = "Sve Arduino ploče")
-        ProductGrid(navController,category)
+        ProductGrid(navController,category,repository)
         }
     }
 }
@@ -118,7 +121,8 @@ fun PageTitle(
 fun ProductCard(
     navController: NavController,
     product : Product,
-    category: Category
+    category: Category,
+    repository : CartRepository
 ) {
     Card(
         modifier = Modifier
@@ -132,7 +136,14 @@ fun ProductCard(
         Column {
             Box(modifier = Modifier
                 .fillMaxWidth()
-                .clickable { navController.navigate(Routes.getProductDetailsPath(category.id,product.id)) }){
+                .clickable {
+                    navController.navigate(
+                        Routes.getProductDetailsPath(
+                            category.id,
+                            product.id
+                        )
+                    )
+                }){
             AsyncImage(model = product.image, contentDescription = product.name)
             }
             Text(text = product.name, style = MaterialTheme.typography.bodyLarge.copy(
@@ -141,10 +152,10 @@ fun ProductCard(
                 fontSize = 15.sp),
                 modifier = Modifier.padding(5.dp))
             Row {
-                Text(text = product.price.toString() + "€", style = MaterialTheme.typography.bodyLarge.copy(
+                Text(text = "${String.format("%.2f", product.price)}€", style = MaterialTheme.typography.bodyLarge.copy(
                     color = Color.White,
                     fontWeight = FontWeight.Medium,
-                    fontSize = 15.sp,
+                    fontSize = 13.sp,
                 ),
                     modifier = Modifier
                         .padding(horizontal = 5.dp)
@@ -156,8 +167,8 @@ fun ProductCard(
                             shape = RoundedCornerShape(12.dp)
                         )
                         .clip(RoundedCornerShape(12.dp))
-                        .padding(horizontal = 10.dp, vertical = 3.dp)
-                        .clickable { }
+                        .padding(horizontal = 14.dp, vertical = 3.dp)
+                        .clickable { repository.addToCart(product) }
                 ) {
                     Text(
                         text = "Add to cart",
@@ -175,13 +186,14 @@ fun ProductCard(
 @Composable
 fun ProductGrid(
     navController: NavController,
-    category : Category
+    category : Category,
+    repository: CartRepository
 ) {
     LazyVerticalGrid(
         columns = GridCells.Adaptive(minSize = 150.dp)
     ) {
         category.products.forEach { product ->
-            item { ProductCard(navController, product, category) }
+            item { ProductCard(navController, product, category, repository) }
         }
     }
 }

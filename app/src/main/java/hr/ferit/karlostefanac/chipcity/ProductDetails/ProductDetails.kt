@@ -30,6 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import coil.compose.AsyncImage
 import hr.ferit.karlostefanac.chipcity.Products.PageTitle
+import hr.ferit.karlostefanac.chipcity.cart.CartRepository
 import hr.ferit.karlostefanac.chipcity.home.Header
 import hr.ferit.karlostefanac.chipcity.models.Product
 
@@ -37,7 +38,8 @@ import hr.ferit.karlostefanac.chipcity.models.Product
 fun ProductDetails(
     navController: NavController,
     categoryId : String,
-    productId : String
+    productId : String,
+    repository: CartRepository
 ) {
     val viewModel : ProductViewModel = viewModel()
     val state = viewModel.state.collectAsState()
@@ -52,7 +54,8 @@ fun ProductDetails(
         is ProductState.Loading -> ProductLoading()
         is ProductState.Success -> ProductDetailsShow(
             navController = navController,
-            product = (state.value as ProductState.Success).state)
+            product = (state.value as ProductState.Success).state,
+            repository = repository)
     }
 }
 
@@ -64,7 +67,8 @@ fun ProductLoading() {
 @Composable
 fun ProductDetailsShow(
     navController: NavController,
-    product: Product
+    product: Product,
+    repository: CartRepository
 ) {
     val colorStops = arrayOf(
         0.1f to Color.Black,
@@ -82,7 +86,7 @@ fun ProductDetailsShow(
         Column(modifier = Modifier.padding(vertical = 10.dp, horizontal = 20.dp)) {
             PageTitle(text = "Opis/info")
             ProductImage(product)
-            Details(product)
+            Details(product,repository)
         }
     }
 }
@@ -104,7 +108,8 @@ fun ProductImage(
 
 @Composable
 fun Details(
-    product: Product
+    product: Product,
+    repository: CartRepository
 ) {
     Column (
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -122,7 +127,7 @@ fun Details(
                 fontFamily = FontFamily.Monospace
             ),)
         Text(
-            text = product.price.toString() + "€",
+            text = "${String.format("%.2f", product.price)}€",
             style = MaterialTheme.typography.bodyLarge.copy(
                 color = Color.White,
                 fontWeight = FontWeight.Medium,
@@ -136,13 +141,13 @@ fun Details(
                     color = Color(165, 45, 45, 128)
                 )
                 .padding(horizontal = 20.dp, vertical = 5.dp)
-                .clickable { }
+                .clickable { repository.addToCart(product) }
         ) {
             Text(
                 text = "Stavi u košaricu",
                 style = TextStyle(
                     color = Color.White,
-                    fontSize = 15.sp,
+                    fontSize = 16.sp,
                     fontWeight = FontWeight.Normal
                 )
             )

@@ -10,6 +10,8 @@ import hr.ferit.karlostefanac.chipcity.ProductDetails.ProductDetails
 import hr.ferit.karlostefanac.chipcity.home.HomePage
 //import hr.ferit.karlostefanac.chipcity.ui.ProductDetails
 import hr.ferit.karlostefanac.chipcity.Products.ProductsPage
+import hr.ferit.karlostefanac.chipcity.cart.CartPage
+import hr.ferit.karlostefanac.chipcity.cart.CartRepository
 
 object Routes{
     const val SCREEN_ALL_CATEGORIES = "HomePage"
@@ -41,7 +43,8 @@ fun NavigationController() {
             HomePage(navController)
         }
         composable(Routes.SCREEN_CART_PAGE){
-            CartPage(navController = navController)
+            val repository : CartRepository = CartRepository()
+            CartPage(navController = navController, repository = repository)
         }
         composable(
             Routes.SCREEN_CATEGORY_DETAILS,
@@ -50,11 +53,14 @@ fun NavigationController() {
                     type = NavType.StringType
                 }
             )
-        ){ backStackEntry ->
+        ){
+            backStackEntry ->
+            val repository : CartRepository = CartRepository()
             backStackEntry.arguments?.getString("categoryId")?.let {idFromArguments ->
                 ProductsPage(
                     navController = navController,
-                    categoryID = idFromArguments
+                    categoryID = idFromArguments,
+                    repository = repository
                 )
             }
         }
@@ -69,9 +75,10 @@ fun NavigationController() {
                 }
             )
         ){ backStackEntry ->
+            val repository : CartRepository = CartRepository()
             val categoryId = backStackEntry.arguments?.getString("categoryId")?: ""
             val productId = backStackEntry.arguments?.getString("productId")?: ""
-            ProductDetails(navController = navController, categoryId = categoryId, productId = productId)
+            ProductDetails(navController = navController, categoryId = categoryId, productId = productId, repository)
         }
     }
 }
