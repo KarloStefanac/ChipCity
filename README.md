@@ -1,3 +1,3 @@
 # ChipCity
 
-## Basic mobile app for a electronics web shop using Kotlin and Jetpack Compose
+Basic mobile app for a electronics web shop using Kotlin and Jetpack Compose
